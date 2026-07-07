@@ -1,10 +1,14 @@
-import streamlit as st
-import category_encoders as ce
-from sklearn.preprocessing import MinMaxScaler
-st.title("House Rent Prediction")
+import os
+
 import joblib
 import pandas as pd
-model = joblib.load("house_rent_prediction.pkl")
+import streamlit as st
+
+st.title("House Rent Prediction")
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+pipeline_path = os.path.join(base_dir, "house_rent_pipeline.pkl")
+pipeline = joblib.load(pipeline_path)
 
 BHK = st.number_input("Enter the number of BHK:", min_value=1, max_value=10, step=1)
 Size = st.number_input("Enter the size of the house in square feet:", min_value=100, max_value=10000, step=10)
@@ -14,23 +18,20 @@ Furnishing_Status = st.selectbox("Select the furnishing status:", ["Furnished", 
 Tenant_Preferred = st.selectbox("Select the tenant preferred:", ["Family", "Bachelors", "Any"])
 Bathroom = st.number_input("Enter the number of bathrooms:", min_value=1, max_value=10, step=1)
 Point_of_Contact = st.selectbox("Select the point of contact:", ["Contact Owner", "Contact Agent", "Contact Builder"])
-input=pd.DataFrame({
-    'BHK':[BHK],
-     'Size': [Size], 
-     'Area Type': [Area_Type], 
-     'City': [City], 
-     'Furnishing Status': [Furnishing_Status],
-     'Tenant Preferred': [Tenant_Preferred],
-        'Bathroom': [Bathroom],
-        
-        'Point of Contact': [Point_of_Contact]
-})
-e=model["encoder"]
-s=model["scaler"]
-m=model["model"]
-new_encoded = e.transform(input)
-new_scaled = s.transform(new_encoded)
+
+input_df = pd.DataFrame(
+    {
+        "BHK": [BHK],
+        "Size": [Size],
+        "Area Type": [Area_Type],
+        "City": [City],
+        "Furnishing Status": [Furnishing_Status],
+        "Tenant Preferred": [Tenant_Preferred],
+        "Bathroom": [Bathroom],
+        "Point of Contact": [Point_of_Contact],
+    }
+)
 
 if st.button("Predict Rent"):
-    prediction = m.predict(new_scaled)
-    st.write(f"The predicted rent is: {prediction[0]}")
+    prediction = pipeline.predict(input_df)[0]
+    st.write(f"The predicted rent is: {prediction}")
